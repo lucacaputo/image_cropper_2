@@ -1,0 +1,31 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+html {
+    min-height: 100%;
+}
+body {
+    height: 100%;
+}
+._crp_crop_box_wrapper {
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+}
+._crp_crop_box {
+    outline: 3px solid #fff;
+}
+._crp_visible_canvas {
+    cursor: crosshair;
+    transition: transform .15s ease;
+    will-change: transform;
+}
