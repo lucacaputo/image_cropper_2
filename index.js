@@ -250,6 +250,7 @@ class Slider {
 
         this._dragDot = this._dragDot.bind(this);
         this._onMouseMove = this._onMouseMove.bind(this);
+        this.setValue = this.setValue.bind(this);
 
         this.wrapper.querySelector('circle').addEventListener('mousedown', () => this.dragging_state.is_dragging = true);
         document.body.addEventListener('mouseup', () => this.dragging_state.is_dragging = false);
@@ -302,6 +303,7 @@ class Slider {
     
     _dragDot() {
         const { x } = this.dragging_state;
+        this.setValue(x*this.step);
         this.wrapper.querySelector('circle').style.transform = `translate3d(${x}px, 0px, 0px)`;
     }
 
