@@ -12,6 +12,7 @@ const defaultSliderOptions = {
     customDotClass: null,
     customLineClass: null,
     width: 0, height: 0,
+    changeCallback: null,
 }
 const SVGnsp = 'http://www.w3.org/2000/svg';
 
@@ -63,6 +64,7 @@ class Cropper {
             height: this.container.clientHeight || this.container.offsetHeight,
         };
 
+        this.scaling = 1;
         this.crop_box_ref = document.createElement('div');
         this.crop_box_ref.className = `_crp_crop_box ${options.customClass ? options.customClass : ''}`;
         this.main_canvas = document.createElement('canvas');
@@ -117,6 +119,15 @@ class Cropper {
         cropper.slider.setImgDimensions(cropper.image.width, cropper.image.height);
         cropper.slider.setScaleBounds(cropper.crop_box_dimensions.width, cropper.crop_box_dimensions.height);
         cropper.slider.mapScalingToValue();
+        cropper.slider._setDotX(cropper.slider.value / cropper.slider.step);
+        cropper.slider._dragDot();
+        cropper.slider.changeCallback = () => {
+            cropper.scaling = cropper.slider.value;
+            cropper.main_canvas.width = cropper.image.width * cropper.scaling;
+            cropper.main_canvas.height = cropper.image.height * cropper.scaling;
+            cropper._setCanvasPosition();
+            cropper._draw_img(cropper.image.width, cropper.image.height);
+        };
         const { width, height } = cropper.image;
         cropper._draw_img(width, height);
         cropper._setCanvasPosition();
@@ -151,7 +162,8 @@ class Cropper {
 
     _draw_img(w, h) {
         let ctx = this.main_canvas.getContext('2d');
-        ctx.drawImage(this.image.bin, 0, 0, w, h);
+        ctx.clearRect(0, 0, w * this.scaling, h * this.scaling);
+        ctx.drawImage(this.image.bin, 0, 0, w * this.scaling, h * this.scaling);
     }
 
     _create_crop_box_wrapper() {
@@ -192,11 +204,31 @@ class Cropper {
         const { is_dragging, left: cl, top: ct } = this.canvas_drag_state;
         if (is_dragging) {
             const { movementX: mx, movementY: my } = evt;
-            let left = clamp(cl + mx, 0, this.container_dimensions.width - this.image.width);
-            let top = clamp(ct + my, 0, this.container_dimensions.height - this.image.height);
+            let left = clamp(cl + mx, 0, this.container_dimensions.width - (this.image.width * this.scaling));
+            let top = clamp(ct + my, 0, this.container_dimensions.height - (this.image.height * this.scaling));
             this._setCanvasDragState({ left, top });
             requestAnimationFrame(this._dragCanvas);
         }
+    }
+
+    result() {
+        this.hidden_canvas.width = this.crop_box_dimensions.width;
+        this.hidden_canvas.height = this.crop_box_dimensions.height;
+        const hid_ctx = this.hidden_canvas.getContext('2d');
+        const main_ctx = this.main_canvas.getContext('2d');
+        hid_ctx.clearRect(
+            0, 0, 
+            this.image.width * this.scaling, 
+            this.image.height * this.scaling
+        );
+        let imgData = main_ctx.getImageData(
+            Math.abs(this.canvas_drag_state.left),
+            Math.abs(this.canvas_drag_state.top),
+            this.crop_box_dimensions.width,
+            this.crop_box_dimensions.height
+        );
+        hid_ctx.putImageData(imgData, 0, 0);
+        return this.hidden_canvas.toDataURL('image/jpeg');
     }
 
 } 
@@ -210,10 +242,11 @@ class Slider {
         this.customDotClass = customDotClass;
         this.customLineClass = customLineClass;
         this.parent = parent;
-        this.max_x = options.width - 20;
+        this.max_x = opts.width - 20;
         this.min_w = 0; this.min_h = 0;
         this.upper_bound = 0; this.lower_bound = 0;
         this.step = 0; this.value = 1;
+        this.changeCallback = opts.changeCallback;
 
         this.wrapper = document.createElement('div');
         this.wrapper.className = '_cr_slider_wrapper';
@@ -305,6 +338,7 @@ class Slider {
         const { x } = this.dragging_state;
         this.setValue(x*this.step);
         this.wrapper.querySelector('circle').style.transform = `translate3d(${x}px, 0px, 0px)`;
+        if (this.changeCallback !== null) this.changeCallback();
     }
 
     _setDotX(x) {
