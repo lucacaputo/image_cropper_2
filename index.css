@@ -26,6 +26,5 @@ body {
 }
 ._crp_visible_canvas {
     cursor: crosshair;
-    transition: transform .15s ease;
     will-change: transform;
 }

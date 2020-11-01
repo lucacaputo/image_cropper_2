@@ -125,7 +125,6 @@ class Cropper {
             cropper.scaling = cropper.slider.value;
             cropper.main_canvas.width = cropper.image.width * cropper.scaling;
             cropper.main_canvas.height = cropper.image.height * cropper.scaling;
-            cropper._setCanvasPosition();
             cropper._draw_img(cropper.image.width, cropper.image.height);
         };
         const { width, height } = cropper.image;
